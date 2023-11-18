@@ -1,5 +1,6 @@
 import functools
 import hashlib
+import json
 import collections
 
 from hash_util import get_block_hash
@@ -16,6 +17,42 @@ blockchain = [GENESIS_BLOCK]
 open_transactions = []
 recipients = {"Anup"}
 owner = "Anup"
+
+# [{"previous_hash": "", "index": 0, "transactions": [], "proof": 100}]
+# []
+
+
+def load_data():
+    with open("blockchain.txt", mode="r") as f:
+        global blockchain
+        global open_transactions
+        file_content = f.readlines()
+        blockchain = json.loads(file_content[0][:-1])
+        updated_blockchain = []
+        for block in blockchain:
+            updated_block = {
+                "previous_hash": block["previous_hash"],
+                "index": block["index"],
+                "proof": block["proof"],
+                "transactions": [collections.OrderedDict([("sender",  tx["sender"]), ("receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in block["transactions"]]
+            }
+            updated_blockchain.append(updated_block)
+
+        blockchain = updated_blockchain
+
+        open_transactions = json.loads(file_content[1])
+        open_transactions = [collections.OrderedDict([("sender",  tx["sender"]), (
+            "receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in open_transactions]
+
+
+load_data()
+
+
+def save_data():
+    with open("blockchain.txt", mode="w") as f:
+        f.write(json.dumps(blockchain))
+        f.write("\n")
+        f.write(json.dumps(open_transactions))
 
 
 def valid_proof(transaction, last_hash, proof):
@@ -86,6 +123,7 @@ def add_transaction(receiver, sender=owner, amount=1.0):
     # }
     if verify_transaction(transaction):
         open_transactions.append(transaction)
+        save_data()
         recipients.add(sender)
         recipients.add(receiver)
         return True
@@ -114,6 +152,7 @@ def mine_block():
     }
     blockchain.append(block)
     open_transactions = []
+    save_data()
 
 
 def get_transaction_data():

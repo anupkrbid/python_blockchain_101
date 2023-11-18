@@ -39,3 +39,5 @@ Python Lambda Functions: https://docs.python.org/3/tutorial/controlflow.html#lam
 map() : https://docs.python.org/3/library/functions.html#map
 
 reduce() : https://docs.python.org/3/library/functools.html#functools.reduce
+
+The (Standard) Library Reference: https://docs.python.org/3/library/index.html

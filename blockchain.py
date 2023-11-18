@@ -1,7 +1,8 @@
 import functools
 import hashlib
-import json
 import collections
+
+from hash_util import get_block_hash
 
 # Initializing our blockchain list
 MINING_REWARD = 10
@@ -53,16 +54,6 @@ def get_balance(recipient):
 
 def get_user_choice():
     return input("Your Choice: ")
-
-
-def get_block_hash(block):
-    """ Hashes a block and returns a string representation  of it.
-
-    Arguments:
-        :block: The block that should be hashed.
-    """
-    json_string_block = json.dumps(block, sort_keys=True).encode()
-    return hashlib.sha256(json_string_block).hexdigest()
 
 
 def get_last_blockchain_value():

@@ -47,3 +47,7 @@ Reading and Writing Files: https://docs.python.org/3/tutorial/inputoutput.html#r
 More on the json Package: https://docs.python.org/3/library/json.html
 
 More on the pickle Package: https://docs.python.org/3/library/pickle.html
+
+Debugging Python in Visual Studio Code: https://code.visualstudio.com/docs/python/debugging
+
+More on try-except: https://docs.python.org/3/tutorial/errors.html

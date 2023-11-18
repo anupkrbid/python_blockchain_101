@@ -8,13 +8,7 @@ from hash_util import get_block_hash
 
 # Initializing our blockchain list
 MINING_REWARD = 10
-GENESIS_BLOCK = {
-    "previous_hash": "",
-    "index": 0,
-    "transactions": [],
-    "proof": 100
-}
-blockchain = [GENESIS_BLOCK]
+blockchain = []
 open_transactions = []
 recipients = {"Anup"}
 owner = "Anup"
@@ -24,48 +18,62 @@ owner = "Anup"
 
 
 def load_data():
-    # with open("blockchain.txt", mode="rb") as f:
-    #     global blockchain
-    #     global open_transactions
+    global blockchain
+    global open_transactions
+    try:
+        # with open("blockchain.txt", mode="rb") as f:
+        #     global blockchain
+        #     global open_transactions
 
-    #     file_content = f.read()
-    #     blockchain, open_transactions = pickle.loads(file_content).values()
-    with open("blockchain.txt", mode="r") as f:
-        global blockchain
-        global open_transactions
-        file_content = f.readlines()
-        blockchain = json.loads(file_content[0][:-1])
-        open_transactions = json.loads(file_content[1])
-        updated_blockchain = []
-        for block in blockchain:
-            updated_block = {
-                "previous_hash": block["previous_hash"],
-                "index": block["index"],
-                "proof": block["proof"],
-                "transactions": [collections.OrderedDict([("sender",  tx["sender"]), ("receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in block["transactions"]]
-            }
-            updated_blockchain.append(updated_block)
+        #     file_content = f.read()
+        #     blockchain, open_transactions = pickle.loads(file_content).values()
+        with open("blockchain.txt", mode="r") as f:
+            file_content = f.readlines()
+            blockchain = json.loads(file_content[0][:-1])
+            open_transactions = json.loads(file_content[1])
+            updated_blockchain = []
+            for block in blockchain:
+                updated_block = {
+                    "previous_hash": block["previous_hash"],
+                    "index": block["index"],
+                    "proof": block["proof"],
+                    "transactions": [collections.OrderedDict([("sender",  tx["sender"]), ("receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in block["transactions"]]
+                }
+                updated_blockchain.append(updated_block)
 
-        blockchain = updated_blockchain
+            blockchain = updated_blockchain
 
-        open_transactions = [collections.OrderedDict([("sender",  tx["sender"]), (
-            "receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in open_transactions]
+            open_transactions = [collections.OrderedDict([("sender",  tx["sender"]), (
+                "receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in open_transactions]
+    except (IOError):
+        GENESIS_BLOCK = {
+            "previous_hash": "",
+            "index": 0,
+            "transactions": [],
+            "proof": 100
+        }
+        blockchain = [GENESIS_BLOCK]
+    finally:
+        print("Code runds no matter what. Code succeeds or fails")
 
 
 load_data()
 
 
 def save_data():
-    # with open("blockchain.txt", mode="wb") as f:
-    #     save_data = {
-    #         "blockchain": blockchain,
-    #         "open_transactions": open_transactions
-    #     }
-    #     f.write(pickle.dumps(save_data))
-    with open("blockchain.txt", mode="w") as f:
-        f.write(json.dumps(blockchain))
-        f.write("\n")
-        f.write(json.dumps(open_transactions))
+    try:
+        # with open("blockchain.txt", mode="wb") as f:
+        #     save_data = {
+        #         "blockchain": blockchain,
+        #         "open_transactions": open_transactions
+        #     }
+        #     f.write(pickle.dumps(save_data))
+        with open("blockchain.txt", mode="w") as f:
+            f.write(json.dumps(blockchain))
+            f.write("\n")
+            f.write(json.dumps(open_transactions))
+    except IOError:
+        print("Data Saving Failed")
 
 
 def valid_proof(transaction, last_hash, proof):

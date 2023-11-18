@@ -2,6 +2,7 @@ import functools
 import hashlib
 import json
 import collections
+import pickle
 
 from hash_util import get_block_hash
 
@@ -23,11 +24,18 @@ owner = "Anup"
 
 
 def load_data():
+    # with open("blockchain.txt", mode="rb") as f:
+    #     global blockchain
+    #     global open_transactions
+
+    #     file_content = f.read()
+    #     blockchain, open_transactions = pickle.loads(file_content).values()
     with open("blockchain.txt", mode="r") as f:
         global blockchain
         global open_transactions
         file_content = f.readlines()
         blockchain = json.loads(file_content[0][:-1])
+        open_transactions = json.loads(file_content[1])
         updated_blockchain = []
         for block in blockchain:
             updated_block = {
@@ -40,7 +48,6 @@ def load_data():
 
         blockchain = updated_blockchain
 
-        open_transactions = json.loads(file_content[1])
         open_transactions = [collections.OrderedDict([("sender",  tx["sender"]), (
             "receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in open_transactions]
 
@@ -49,6 +56,12 @@ load_data()
 
 
 def save_data():
+    # with open("blockchain.txt", mode="wb") as f:
+    #     save_data = {
+    #         "blockchain": blockchain,
+    #         "open_transactions": open_transactions
+    #     }
+    #     f.write(pickle.dumps(save_data))
     with open("blockchain.txt", mode="w") as f:
         f.write(json.dumps(blockchain))
         f.write("\n")

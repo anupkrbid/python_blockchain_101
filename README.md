@@ -41,3 +41,9 @@ map() : https://docs.python.org/3/library/functions.html#map
 reduce() : https://docs.python.org/3/library/functools.html#functools.reduce
 
 The (Standard) Library Reference: https://docs.python.org/3/library/index.html
+
+Reading and Writing Files: https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files
+
+More on the json Package: https://docs.python.org/3/library/json.html
+
+More on the pickle Package: https://docs.python.org/3/library/pickle.html

@@ -1,16 +1,35 @@
 import functools
+import hashlib
+import json
+import collections
 
 # Initializing our blockchain list
 MINING_REWARD = 10
 GENESIS_BLOCK = {
     "previous_hash": "",
     "index": 0,
-    "transactions": []
+    "transactions": [],
+    "proof": 100
 }
 blockchain = [GENESIS_BLOCK]
 open_transactions = []
 recipients = {"Anup"}
 owner = "Anup"
+
+
+def valid_proof(transaction, last_hash, proof):
+    guess = f"{transaction} {last_hash} {proof}".encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    return guess_hash[0:2] == "00"
+
+
+def proof_of_work():
+    last_block = blockchain[-1]
+    last_hash = get_block_hash(last_block)
+    proof = 0
+    while not valid_proof(open_transactions, last_hash, proof):
+        proof += 1
+    return proof
 
 
 def get_balance(recipient):
@@ -37,7 +56,13 @@ def get_user_choice():
 
 
 def get_block_hash(block):
-    return "-".join([str(block[key]) for key in block])
+    """ Hashes a block and returns a string representation  of it.
+
+    Arguments:
+        :block: The block that should be hashed.
+    """
+    json_string_block = json.dumps(block, sort_keys=True).encode()
+    return hashlib.sha256(json_string_block).hexdigest()
 
 
 def get_last_blockchain_value():
@@ -61,11 +86,13 @@ def add_transaction(receiver, sender=owner, amount=1.0):
         :receiver: The receiver of the coins.
         :amount: The amount of the coins.
     """
-    transaction = {
-        "sender": sender,
-        "receiver": receiver,
-        "amount": amount
-    }
+    transaction = collections.OrderedDict(
+        [("sender", sender), ("receiver", receiver), ("amount", amount)])
+    # transaction = {
+    #     "sender": sender,
+    #     "receiver": receiver,
+    #     "amount": amount
+    # }
     if verify_transaction(transaction):
         open_transactions.append(transaction)
         recipients.add(sender)
@@ -78,17 +105,21 @@ def mine_block():
     global open_transactions
     last_block = blockchain[-1]
     hashed_block = get_block_hash(last_block)
-    tx_reward = {
-        "sender": "MINING",
-        "receiver": owner,
-        "amount": MINING_REWARD
-    }
+    proof = proof_of_work()
+    # tx_reward = {
+    #     "sender": "MINING",
+    #     "receiver": owner,
+    #     "amount": MINING_REWARD
+    # }
+    tx_reward = collections.OrderedDict(
+        [("sender", "MINING"), ("receiver", owner), ("amount", MINING_REWARD)])
     copied_transaction = open_transactions[:]
     copied_transaction.append(tx_reward)
     block = {
         "previous_hash": hashed_block,
         "index": len(blockchain),
-        "transactions": copied_transaction
+        "transactions": copied_transaction,
+        "proof": proof
     }
     blockchain.append(block)
     open_transactions = []
@@ -120,7 +151,9 @@ def verify_chain():
         previous_block_hash = get_block_hash(previous_block)
         if current_block["previous_hash"] != previous_block_hash:
             return False
-
+        if not valid_proof(current_block["transactions"][:-1], current_block["previous_hash"], current_block["proof"]):
+            print('Proof of work in invalid')
+            return False
     return True
 
 

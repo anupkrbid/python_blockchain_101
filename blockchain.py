@@ -1,3 +1,5 @@
+import functools
+
 # Initializing our blockchain list
 MINING_REWARD = 10
 GENESIS_BLOCK = {
@@ -14,11 +16,15 @@ owner = "Anup"
 def get_balance(recipient):
     tx_debit_balances = [[tx["amount"] for tx in block['transactions'] if tx["sender"] == recipient]
                          for block in blockchain]
-    tx_debit_balance = sum([sum(bal) for bal in tx_debit_balances])
+    # tx_debit_balance = sum([sum(bal) for bal in tx_debit_balances])
+    tx_debit_balance = functools.reduce(
+        lambda acc, curr: acc + sum(curr), tx_debit_balances, 0)
 
     tx_credit_balances = [[tx["amount"] for tx in block['transactions'] if tx["receiver"] == recipient]
                           for block in blockchain]
-    tx_credit_balance = sum([sum(bal) for bal in tx_credit_balances])
+    # tx_credit_balance = sum([sum(bal) for bal in tx_credit_balances])
+    tx_credit_balance = functools.reduce(
+        lambda acc, curr: acc + sum(curr), tx_credit_balances, 0)
 
     tx_open_debit_balance = sum(
         [tx["amount"] for tx in open_transactions if tx["sender"] == recipient])
@@ -158,11 +164,12 @@ while waiting_for_input:
     else:
         print("Invalid choice, try again")
 
-    print(get_balance("Anup"))
     if not verify_chain():
         print_blokchain()
         print("Blockchain coroupted!")
         break
+
+    print("Balance of {}: {:6.2f}".format(owner, get_balance(owner)))
 else:
     print("User Left Normally!")
 

@@ -12,5 +12,6 @@ def get_block_hash(block):
     Arguments:
         :block: The block that should be hashed.
     """
-    json_string_block = json.dumps(block, sort_keys=True).encode()
+    hashable_block = block.__dict__.copy()
+    json_string_block = json.dumps(hashable_block, sort_keys=True).encode()
     return get_hash_string_256(json_string_block)

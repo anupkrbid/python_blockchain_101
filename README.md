@@ -51,3 +51,7 @@ More on the pickle Package: https://docs.python.org/3/library/pickle.html
 Debugging Python in Visual Studio Code: https://code.visualstudio.com/docs/python/debugging
 
 More on try-except: https://docs.python.org/3/tutorial/errors.html
+
+Docstring Examples: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+
+Python Special Methods: https://docs.python.org/3/reference/datamodel.html#basic-customization

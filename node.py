@@ -70,7 +70,7 @@ class Node:
                 break
 
             print("Balance of {}: {:6.2f}".format(
-                self.id, self.blockchain.get_balance(self.id)))
+                self.id, self.blockchain.get_balance()))
         else:
             print("User Left Normally!")
 

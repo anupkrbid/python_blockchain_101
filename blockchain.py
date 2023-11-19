@@ -12,6 +12,14 @@ MINING_REWARD = 10
 
 
 class Blockchain:
+    """The Blockchain class manages the chain of blocks as well as open transactions and the node on which it's running.
+
+    Attributes:
+        :chain: The list of blocks
+        :open_transactions (private): The list of open transactions
+        :hosting_node: The connected node (which runs the blockchain).
+    """
+
     def __init__(self, hosting_node_id) -> None:
         self.hosting_node_id = hosting_node_id
         # Our starting block for the blockchain
@@ -55,7 +63,7 @@ class Blockchain:
                     converted_tx = [Transaction(
                         tx["sender"], tx["receiver"], tx["amount"]) for tx in block["transactions"]]
                     updated_block = Block(
-                        block["index"], block["previous_hash"], converted_tx, block["proof"])
+                        block["index"], block["previous_hash"], converted_tx, block["proof"], block['timestamp'])
                     updated_blockchain.append(updated_block)
 
                 self.__chain = updated_blockchain
@@ -77,14 +85,14 @@ class Blockchain:
             #     }
             #     f.write(pickle.dumps(save_data))
             with open("blockchain.txt", mode="w") as f:
-                # modified_blockchain = [
-                #     Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof) for block_el in self.chain]
-                # saveable_chain = [
-                #     block.__dict__ for block in modified_blockchain]
-                saveable_chain = [block.__dict__ for block in [
-                    Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof) for block_el in self.__chain]]
-                savable_open_txs = [
-                    tx.__dict__ for tx in self.__open_transactions]
+                modified_blockchain = [
+                    Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof,  block_el.timestamp) for block_el in self.chain]
+                saveable_chain = [
+                    block.__dict__ for block in modified_blockchain]
+                # saveable_chain = [block.__dict__ for block in [
+                #     Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof,  block_el.timestamp) for block_el in self.__chain]]
+                # savable_open_txs = [
+                #     tx.__dict__ for tx in self.__open_transactions]
                 f.write(json.dumps(saveable_chain))
                 f.write("\n")
                 f.write(json.dumps(savable_open_txs))

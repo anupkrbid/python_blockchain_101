@@ -1,7 +1,10 @@
-from hash_util import get_hash_string_256
+""" Provides verification helper methods. """
+from utility.hash_util import get_hash_string_256
+from wallet import Wallet
 
 
 class Verification:
+    """ A helper class which offers various static and clas-based verification """
     @staticmethod
     def valid_proof(transactions, last_hash, proof):
         open_tx = [transaction.to_ordered_dict()
@@ -29,9 +32,11 @@ class Verification:
         return True
 
     @staticmethod
-    def verify_transaction(transaction, get_balance):
+    def verify_transaction(transaction, get_balance, check_funds=True):
         sender_balance = get_balance()
-        return sender_balance >= transaction.amount
+        if check_funds:
+            return sender_balance >= transaction.amount and Wallet.verify_transaction(transaction)
+        return Wallet.verify_transaction(transaction)
 
     @classmethod
     def verify_transactions(cls, open_transactions, get_balance):

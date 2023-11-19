@@ -55,3 +55,13 @@ More on try-except: https://docs.python.org/3/tutorial/errors.html
 Docstring Examples: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 
 Python Special Methods: https://docs.python.org/3/reference/datamodel.html#basic-customization
+
+Using Virtual Environments
+Virtual Environments allow you to only install certain Python packages for some projects - instead of globally on your machine. This is helpful when working with multiple projects where you might want to use a different set of packages (=> dependencies) for every project.
+
+You can easily create a new virtual environment in the Anaconda Navigator (as shown in the last lecture). Read more here: https://docs.anaconda.com/anaconda/navigator/getting-started#navigator-managing-environments
+
+After creating an environment, you need to activate it. There are two ways of doing that:
+
+Execute source activate NAME_OF_ENVIRONMENT (e.g. source activate pycoin ) on macOS and Linux or just activate NAME_OF_ENVIRONMENT (e.g. activate pycoin ) on Windows. This might fail for Windows though. To fix it, please see this thread: https://github.com/ContinuumIO/anaconda-issues/issues/2533
+Alternatively, you use the Anaconda Navigator to launch a terminal/ command prompt that already uses your new virtual environment: Click on the green "play" button next to your environment name and choose the option to launch a new terminal/ command prompt there. This will be a normal terminal/ command prompt, so after navigating into your project folder (via the cd command), you can use it just as shown in the videos.

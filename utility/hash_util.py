@@ -1,8 +1,15 @@
 import hashlib
 import json
 
+__all__ = ["get_hash_string_256", "get_block_hash"]  # allowed exports
+
 
 def get_hash_string_256(json_string):
+    """ Create a SHA256 hash for a given input string.
+
+    Arguments:
+        :string: The string which should be hashed.
+    """
     return hashlib.sha256(json_string).hexdigest()
 
 

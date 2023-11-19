@@ -4,8 +4,9 @@ import pickle
 
 from block import Block
 from transaction import Transaction
-from verification import Verification
-from hash_util import get_block_hash
+from utility.verification import Verification
+from wallet import Wallet
+from utility.hash_util import get_block_hash
 
 # The reward given to miners (for creating a new block)
 MINING_REWARD = 10
@@ -61,7 +62,7 @@ class Blockchain:
                 updated_blockchain = []
                 for block in blockchain:
                     converted_tx = [Transaction(
-                        tx["sender"], tx["receiver"], tx["amount"]) for tx in block["transactions"]]
+                        tx["sender"], tx["receiver"], tx["signature"], tx["amount"]) for tx in block["transactions"]]
                     updated_block = Block(
                         block["index"], block["previous_hash"], converted_tx, block["proof"], block['timestamp'])
                     updated_blockchain.append(updated_block)
@@ -69,7 +70,7 @@ class Blockchain:
                 self.__chain = updated_blockchain
 
                 self.__open_transactions = [Transaction(
-                    tx["sender"], tx["receiver"], tx["amount"]) for tx in open_transactions]
+                    tx["sender"], tx["receiver"], tx["signature"], tx["amount"]) for tx in open_transactions]
         except (IOError, IndexError, EOFError):
             print("IOError or IndexError Exception Handle")
         finally:
@@ -91,8 +92,8 @@ class Blockchain:
                     block.__dict__ for block in modified_blockchain]
                 # saveable_chain = [block.__dict__ for block in [
                 #     Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof,  block_el.timestamp) for block_el in self.__chain]]
-                # savable_open_txs = [
-                #     tx.__dict__ for tx in self.__open_transactions]
+                savable_open_txs = [
+                    tx.__dict__ for tx in self.__open_transactions]
                 f.write(json.dumps(saveable_chain))
                 f.write("\n")
                 f.write(json.dumps(savable_open_txs))
@@ -132,15 +133,20 @@ class Blockchain:
 
         return self.chain[-1]
 
-    def add_transaction(self, receiver, sender, amount=1.0):
+    def add_transaction(self, receiver, sender, signature, amount=1.0):
         """ Append a new value as well as the last blockchain value to the current blockchain
 
-        Arguments:
-            :sender: The sender of the coins.
-            :receiver: The receiver of the coins.
-            :amount: The amount of the coins.
+        Attribute:
+            :sender: The sender of the coin
+            :receiver: The receiver of the coin
+            :signature: The signature of the transaction 
+            :amount: The amount of coins sent
         """
-        transaction = Transaction(sender, receiver, amount)
+        if self.hosting_node_id == None:
+            return False
+
+        transaction = Transaction(sender, receiver, signature, amount)
+
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
             self.save_data()
@@ -149,14 +155,27 @@ class Blockchain:
 
     def mine_block(self):
         global open_transactions
+
+        if self.hosting_node_id == None:
+            print("Mining Failed. Got no wallet?")
+            pass
+
         last_block = self.__chain[-1]
         hashed_block = get_block_hash(last_block)
         proof = self.proof_of_work()
-        tx_reward = Transaction("MINING", self.hosting_node_id, MINING_REWARD)
+        tx_reward = Transaction(
+            "MINING", self.hosting_node_id, "", MINING_REWARD)
         copied_transaction = self.__open_transactions[:]
+
+        for tx in copied_transaction:
+            if not Wallet.verify_transaction(tx):
+                print("Transaction verification failed")
+                return
+
         copied_transaction.append(tx_reward)
         rewared_block = Block(len(self.__chain), hashed_block,
                               copied_transaction, proof)
+
         self.__chain.append(rewared_block)
         open_transactions = []
         self.save_data()

@@ -65,3 +65,9 @@ After creating an environment, you need to activate it. There are two ways of do
 
 Execute source activate NAME_OF_ENVIRONMENT (e.g. source activate pycoin ) on macOS and Linux or just activate NAME_OF_ENVIRONMENT (e.g. activate pycoin ) on Windows. This might fail for Windows though. To fix it, please see this thread: https://github.com/ContinuumIO/anaconda-issues/issues/2533
 Alternatively, you use the Anaconda Navigator to launch a terminal/ command prompt that already uses your new virtual environment: Click on the green "play" button next to your environment name and choose the option to launch a new terminal/ command prompt there. This will be a normal terminal/ command prompt, so after navigating into your project folder (via the cd command), you can use it just as shown in the videos.
+
+More on Python Modules: https://docs.python.org/3/tutorial/modules.html
+
+Using Anaconda: https://docs.anaconda.com/anaconda/
+
+PyCrypto Docs: https://pypi.org/project/pycrypto/

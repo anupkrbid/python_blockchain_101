@@ -1,8 +1,8 @@
 from uuid import uuid4
-from verification import Verification
 from blockchain import Blockchain
 from block import Block
 from hash_util import get_block_hash
+from verification import Verification
 
 
 class Node:
@@ -28,7 +28,6 @@ class Node:
             print("-" * 100)
 
     def listen_for_input(self):
-        verification = Verification()
         waiting_for_input = True
         while waiting_for_input:
             print("""Please Choose
@@ -52,7 +51,7 @@ class Node:
             elif choice == "3":
                 self.print_blokchain()
             elif choice == "4":
-                if verification.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_balance):
+                if Verification.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_balance):
                     print("All transactions verification successful")
                 else:
                     print("All transactions verification failed")
@@ -65,7 +64,7 @@ class Node:
             else:
                 print("Invalid choice, try again")
 
-            if not verification.verify_chain(self.blockchain.chain, get_block_hash):
+            if not Verification.verify_chain(self.blockchain.chain, get_block_hash):
                 self.print_blokchain()
                 print("Blockchain coroupted!")
                 break

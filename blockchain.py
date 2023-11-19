@@ -9,7 +9,6 @@ from hash_util import get_block_hash
 
 # The reward given to miners (for creating a new block)
 MINING_REWARD = 10
-verification = Verification()
 
 
 class Blockchain:
@@ -81,7 +80,7 @@ class Blockchain:
         last_block = self.chain[-1]
         last_hash = get_block_hash(last_block)
         proof = 0
-        while not verification.valid_proof(self.open_transactions, last_hash, proof):
+        while not Verification.valid_proof(self.open_transactions, last_hash, proof):
             proof += 1
         return proof
 
@@ -118,7 +117,7 @@ class Blockchain:
             :amount: The amount of the coins.
         """
         transaction = Transaction(sender, receiver, amount)
-        if verification.verify_transaction(transaction, self.get_balance):
+        if Verification.verify_transaction(transaction, self.get_balance):
             open_transactions.append(transaction)
             self.save_data()
             return True

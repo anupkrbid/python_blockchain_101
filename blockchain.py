@@ -41,11 +41,11 @@ class Blockchain:
         """ Initialize blockchain + open transaactions data """
         try:
             # with open("blockchain.txt", mode="rb") as f:
-            #     global blockchain
-            #     global open_transactions
-
             #     file_content = f.read()
-            #     blockchain, open_transactions = pickle.loads(file_content).values()
+            #     blockchain, open_transactions = pickle.loads(
+            #         file_content).values()
+            #     self.__chain = blockchain
+            #     self.__open_transactions = open_transactions
             with open("blockchain.txt", mode="r") as f:
                 file_content = f.readlines()
                 blockchain = json.loads(file_content[0][:-1])
@@ -62,7 +62,7 @@ class Blockchain:
 
                 self.__open_transactions = [Transaction(
                     tx["sender"], tx["receiver"], tx["amount"]) for tx in open_transactions]
-        except (IOError, IndexError):
+        except (IOError, IndexError, EOFError):
             print("IOError or IndexError Exception Handle")
         finally:
             print("Cleanup Code runs no matter what. Code succeeds or fails")
@@ -72,8 +72,8 @@ class Blockchain:
         try:
             # with open("blockchain.txt", mode="wb") as f:
             #     save_data = {
-            #         "blockchain": blockchain,
-            #         "open_transactions": open_transactions
+            #         "blockchain": self.__chain,
+            #         "open_transactions": self.__open_transactions
             #     }
             #     f.write(pickle.dumps(save_data))
             with open("blockchain.txt", mode="w") as f:

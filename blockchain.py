@@ -5,13 +5,13 @@ import collections
 import pickle
 
 from block import Block
+from transaction import Transaction
 from hash_util import get_block_hash
 
 # Initializing our blockchain list
 MINING_REWARD = 10
 blockchain = []
 open_transactions = []
-recipients = {"Anup"}
 owner = "Anup"
 
 # [{"previous_hash": "", "index": 0, "transactions": [], "proof": 100}]
@@ -34,16 +34,16 @@ def load_data():
             open_transactions = json.loads(file_content[1])
             updated_blockchain = []
             for block in blockchain:
-                converted_tx = [collections.OrderedDict([("sender",  tx["sender"]), (
-                    "receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in block["transactions"]]
+                converted_tx = [Transaction(
+                    tx["sender"], tx["receiver"], tx["amount"]) for tx in block["transactions"]]
                 updated_block = Block(
                     block["index"], block["previous_hash"], converted_tx, block["proof"])
                 updated_blockchain.append(updated_block)
 
             blockchain = updated_blockchain
 
-            open_transactions = [collections.OrderedDict([("sender",  tx["sender"]), (
-                "receiver", tx["receiver"]), ("amount", tx["amount"])]) for tx in open_transactions]
+            open_transactions = [Transaction(
+                tx["sender"], tx["receiver"], tx["amount"]) for tx in open_transactions]
     except (IOError, IndexError):
         genesis_block = Block(0, "", [], 100, 0)
         blockchain = [genesis_block]
@@ -63,16 +63,20 @@ def save_data():
         #     }
         #     f.write(pickle.dumps(save_data))
         with open("blockchain.txt", mode="w") as f:
-            saveable_chain = [block.__dict__ for block in blockchain]
+            modified_blockchain = [
+                Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof) for block_el in blockchain]
+            saveable_chain = [block.__dict__ for block in modified_blockchain]
+            savable_open_txs = [tx.__dict__ for tx in open_transactions]
             f.write(json.dumps(saveable_chain))
             f.write("\n")
-            f.write(json.dumps(open_transactions))
+            f.write(json.dumps(savable_open_txs))
     except IOError:
         print("Data Saving Failed")
 
 
-def valid_proof(transaction, last_hash, proof):
-    guess = f"{transaction} {last_hash} {proof}".encode()
+def valid_proof(transactions, last_hash, proof):
+    open_tx = [transaction.to_ordered_dict() for transaction in transactions]
+    guess = f"{open_tx} {last_hash} {proof}".encode()
     guess_hash = hashlib.sha256(guess).hexdigest()
     return guess_hash[0:2] == "00"
 
@@ -87,20 +91,18 @@ def proof_of_work():
 
 
 def get_balance(recipient):
-    tx_debit_balances = [[tx["amount"] for tx in block.transactions if tx["sender"] == recipient]
+    tx_debit_balances = [[tx.amount for tx in block.transactions if tx.sender == recipient]
                          for block in blockchain]
-    # tx_debit_balance = sum([sum(bal) for bal in tx_debit_balances])
     tx_debit_balance = functools.reduce(
         lambda acc, curr: acc + sum(curr), tx_debit_balances, 0)
 
-    tx_credit_balances = [[tx["amount"] for tx in block.transactions if tx["receiver"] == recipient]
+    tx_credit_balances = [[tx.amount for tx in block.transactions if tx.receiver == recipient]
                           for block in blockchain]
-    # tx_credit_balance = sum([sum(bal) for bal in tx_credit_balances])
     tx_credit_balance = functools.reduce(
         lambda acc, curr: acc + sum(curr), tx_credit_balances, 0)
 
     tx_open_debit_balance = sum(
-        [tx["amount"] for tx in open_transactions if tx["sender"] == recipient])
+        [tx.amount for tx in open_transactions if tx.sender == recipient])
 
     return tx_credit_balance - (tx_debit_balance + tx_open_debit_balance)
 
@@ -118,8 +120,8 @@ def get_last_blockchain_value():
 
 
 def verify_transaction(transaction):
-    sender_balance = get_balance(transaction["sender"])
-    return sender_balance >= transaction["amount"]
+    sender_balance = get_balance(transaction.sender)
+    return sender_balance >= transaction.amount
 
 
 def add_transaction(receiver, sender=owner, amount=1.0):
@@ -130,13 +132,10 @@ def add_transaction(receiver, sender=owner, amount=1.0):
         :receiver: The receiver of the coins.
         :amount: The amount of the coins.
     """
-    transaction = collections.OrderedDict(
-        [("sender", sender), ("receiver", receiver), ("amount", amount)])
+    transaction = Transaction(sender, receiver, amount)
     if verify_transaction(transaction):
         open_transactions.append(transaction)
         save_data()
-        recipients.add(sender)
-        recipients.add(receiver)
         return True
     return False
 
@@ -146,8 +145,7 @@ def mine_block():
     last_block = blockchain[-1]
     hashed_block = get_block_hash(last_block)
     proof = proof_of_work()
-    tx_reward = collections.OrderedDict(
-        [("sender", "MINING"), ("receiver", owner), ("amount", MINING_REWARD)])
+    tx_reward = Transaction("MINING", owner, MINING_REWARD)
     copied_transaction = open_transactions[:]
     copied_transaction.append(tx_reward)
     rewared_block = Block(len(blockchain), hashed_block,
@@ -165,11 +163,11 @@ def get_transaction_data():
 
 
 def print_blokchain():
+    print("-" * 100)
     for block in blockchain:
-        print("output block")
         print(block)
     else:
-        print("-" * 20)
+        print("-" * 100)
 
 
 def verify_chain():
@@ -195,7 +193,6 @@ while waiting_for_input:
         1: Add a new transaction value
         2: Mine a new block
         3: Output the blockchain blocks
-        4: Output receivers
         h: Manipulate the chain
         q: Quit""")
     choice = get_user_choice()
@@ -211,8 +208,6 @@ while waiting_for_input:
         mine_block()
     elif choice == "3":
         print_blokchain()
-    elif choice == "4":
-        print(recipients)
     elif choice == "h":
         if len(blockchain) > 0:
             tampered_block = Block(0, "tampered", [], 100, 1)

@@ -1,11 +1,10 @@
 import functools
-import hashlib
 import json
-import collections
 import pickle
 
 from block import Block
 from transaction import Transaction
+from verification import Verification
 from hash_util import get_block_hash
 
 # Initializing our blockchain list
@@ -13,6 +12,7 @@ MINING_REWARD = 10
 blockchain = []
 open_transactions = []
 owner = "Anup"
+verification = Verification()
 
 # [{"previous_hash": "", "index": 0, "transactions": [], "proof": 100}]
 # []
@@ -74,18 +74,11 @@ def save_data():
         print("Data Saving Failed")
 
 
-def valid_proof(transactions, last_hash, proof):
-    open_tx = [transaction.to_ordered_dict() for transaction in transactions]
-    guess = f"{open_tx} {last_hash} {proof}".encode()
-    guess_hash = hashlib.sha256(guess).hexdigest()
-    return guess_hash[0:2] == "00"
-
-
 def proof_of_work():
     last_block = blockchain[-1]
     last_hash = get_block_hash(last_block)
     proof = 0
-    while not valid_proof(open_transactions, last_hash, proof):
+    while not verification.valid_proof(open_transactions, last_hash, proof):
         proof += 1
     return proof
 
@@ -119,11 +112,6 @@ def get_last_blockchain_value():
     return blockchain[-1]
 
 
-def verify_transaction(transaction):
-    sender_balance = get_balance(transaction.sender)
-    return sender_balance >= transaction.amount
-
-
 def add_transaction(receiver, sender=owner, amount=1.0):
     """ Append a new value as well as the last blockchain value to the current blockchain
 
@@ -133,7 +121,7 @@ def add_transaction(receiver, sender=owner, amount=1.0):
         :amount: The amount of the coins.
     """
     transaction = Transaction(sender, receiver, amount)
-    if verify_transaction(transaction):
+    if verification.verify_transaction(transaction, get_balance):
         open_transactions.append(transaction)
         save_data()
         return True
@@ -170,29 +158,13 @@ def print_blokchain():
         print("-" * 100)
 
 
-def verify_chain():
-    # for (index, block) in enumerate(blockchain):
-    for block_index in range(len(blockchain)):
-        if block_index <= 0:
-            continue
-
-        current_block = blockchain[block_index]
-        previous_block = blockchain[block_index - 1]
-        previous_block_hash = get_block_hash(previous_block)
-        if current_block.previous_hash != previous_block_hash:
-            return False
-        if not valid_proof(current_block.transactions[:-1], current_block.previous_hash, current_block.proof):
-            print('Proof of work in invalid')
-            return False
-    return True
-
-
 waiting_for_input = True
 while waiting_for_input:
     print("""Please Choose
         1: Add a new transaction value
         2: Mine a new block
         3: Output the blockchain blocks
+        4: Verify all transactions
         h: Manipulate the chain
         q: Quit""")
     choice = get_user_choice()
@@ -208,6 +180,11 @@ while waiting_for_input:
         mine_block()
     elif choice == "3":
         print_blokchain()
+    elif choice == "4":
+        if verification.verify_transactions(open_transactions, get_balance):
+            print("All transactions verification successful")
+        else:
+            print("All transactions verification failed")
     elif choice == "h":
         if len(blockchain) > 0:
             tampered_block = Block(0, "tampered", [], 100, 1)
@@ -217,7 +194,7 @@ while waiting_for_input:
     else:
         print("Invalid choice, try again")
 
-    if not verify_chain():
+    if not verification.verify_chain(blockchain, get_block_hash):
         print_blokchain()
         print("Blockchain coroupted!")
         break

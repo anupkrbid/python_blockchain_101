@@ -119,6 +119,8 @@ class Blockchain:
 
     def get_balance(self):
         """Calculate and return the balance for a participant."""
+        if self.hosting_node_id == None:
+            return None
         recipient = self.hosting_node_id
         # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
         # This fetches sent amounts of transactions that were already included in blocks of the blockchain
@@ -171,7 +173,7 @@ class Blockchain:
         # Fetch the currently last block of the blockchain
         if self.hosting_node_id == None:
             print("Mining Failed. Got no wallet?")
-            pass
+            return None
 
         last_block = self.__chain[-1]
         # Hash the last block (=> to be able to compare it to the stored hash value)
@@ -186,7 +188,7 @@ class Blockchain:
         for tx in copied_transaction:
             if not Wallet.verify_transaction(tx):
                 print("Transaction verification failed")
-                return
+                None
 
         copied_transaction.append(tx_reward)
         rewared_block = Block(len(self.__chain), hashed_block,
@@ -195,3 +197,4 @@ class Blockchain:
         self.__chain.append(rewared_block)
         self.__open_transactions = []
         self.save_data()
+        return rewared_block

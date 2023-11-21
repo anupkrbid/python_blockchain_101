@@ -69,7 +69,8 @@ class Node:
                 else:
                     print("Transacion Failed")
             elif choice == "2":
-                self.blockchain.mine_block()
+                if self.blockchain.mine_block() != None:
+                    print("Mining Successful..")
             elif choice == "3":
                 self.print_blokchain()
             elif choice == "4":
@@ -81,8 +82,8 @@ class Node:
                 self.wallet.create_keys()
                 self.blockchain = Blockchain(self.wallet.public_key)
             elif choice == "6":
-                self.wallet.load_keys()
-                self.blockchain = Blockchain(self.wallet.public_key)
+                if self.wallet.load_keys() != None:
+                    self.blockchain = Blockchain(self.wallet.public_key)
             elif choice == "7":
                 self.wallet.save_keys()
             elif choice == "h":

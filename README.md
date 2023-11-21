@@ -1,6 +1,11 @@
-# Python Blockchain 101
+# PyCoin
 
 Building a simple blockchain and cryptocurrency app while learning python 3.x
+
+```bash
+python node.web.py # http://localhost:8000/
+
+```
 
 Learn more about the History of Python: https://en.wikipedia.org/wiki/History_of_Python
 

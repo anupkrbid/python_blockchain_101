@@ -47,7 +47,7 @@ class Blockchain:
     #     pass
 
     def load_data(self):
-        """ Initialize blockchain + open transaactions data """
+        """Initialize blockchain + open transactions data from a file."""
         try:
             # with open("blockchain.txt", mode="rb") as f:
             #     file_content = f.read()
@@ -73,11 +73,12 @@ class Blockchain:
                     tx["sender"], tx["receiver"], tx["signature"], tx["amount"]) for tx in open_transactions]
         except (IOError, IndexError, EOFError):
             print("IOError or IndexError Exception Handle")
+            pass
         finally:
             print("Cleanup Code runs no matter what. Code succeeds or fails")
 
     def save_data(self):
-        """ Save blockchain + open transactions snapshot to a file """
+        """Save blockchain + open transactions snapshot to a file."""
         try:
             # with open("blockchain.txt", mode="wb") as f:
             #     save_data = {
@@ -101,7 +102,7 @@ class Blockchain:
             print("Data Saving Failed")
 
     def proof_of_work(self):
-        """ Generate a proof of work for the open transaction, last hash and proof """
+        """Generate a proof of work for the open transactions, the hash of the previous block and a random number (which is guessed until it fits)."""
         last_block = self.__chain[-1]
         last_hash = get_block_hash(last_block)
         proof = 0
@@ -110,31 +111,36 @@ class Blockchain:
         return proof
 
     def get_balance(self):
+        """Calculate and return the balance for a participant."""
         recipient = self.hosting_node_id
+        # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
+        # This fetches sent amounts of transactions that were already included in blocks of the blockchain
         tx_debit_balances = [[tx.amount for tx in block.transactions if tx.sender == recipient]
                              for block in self.__chain]
         tx_debit_balance = functools.reduce(
             lambda acc, curr: acc + sum(curr), tx_debit_balances, 0)
-
+        # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
+        # This fetches sent amounts of open transactions (to avoid double spending)
+        tx_open_debit_balance = sum(
+            [tx.amount for tx in self.__open_transactions if tx.sender == recipient])
+        # This fetches received coin amounts of transactions that were already included in blocks of the blockchain
+        # We ignore open transactions here because you shouldn't be able to spend coins before the transaction was confirmed + included in a block
         tx_credit_balances = [[tx.amount for tx in block.transactions if tx.receiver == recipient]
                               for block in self.__chain]
         tx_credit_balance = functools.reduce(
             lambda acc, curr: acc + sum(curr), tx_credit_balances, 0)
-
-        tx_open_debit_balance = sum(
-            [tx.amount for tx in self.__open_transactions if tx.sender == recipient])
-
+        # Return the total balance
         return tx_credit_balance - (tx_debit_balance + tx_open_debit_balance)
 
     def get_last_blockchain_value(self):
-        """ Return the last value of the current blockchain """
+        """Returns the last value of the current blockchain."""
         if len(self.chain) < 1:
             return None
 
         return self.chain[-1]
 
     def add_transaction(self, receiver, sender, signature, amount=1.0):
-        """ Append a new value as well as the last blockchain value to the current blockchain
+        """Append a new value as well as the last blockchain value to the current blockchain.
 
         Attribute:
             :sender: The sender of the coin
@@ -154,17 +160,20 @@ class Blockchain:
         return False
 
     def mine_block(self):
-        global open_transactions
-
+        """Create a new block and add open transactions to it."""
+        # Fetch the currently last block of the blockchain
         if self.hosting_node_id == None:
             print("Mining Failed. Got no wallet?")
             pass
 
         last_block = self.__chain[-1]
+        # Hash the last block (=> to be able to compare it to the stored hash value)
         hashed_block = get_block_hash(last_block)
         proof = self.proof_of_work()
         tx_reward = Transaction(
             "MINING", self.hosting_node_id, "", MINING_REWARD)
+        # Copy transaction instead of manipulating the original open_transactions list
+        # This ensures that if for some reason the mining should fail, we don't have the reward transaction stored in the open transactions
         copied_transaction = self.__open_transactions[:]
 
         for tx in copied_transaction:
@@ -177,5 +186,5 @@ class Blockchain:
                               copied_transaction, proof)
 
         self.__chain.append(rewared_block)
-        open_transactions = []
+        self.__open_transactions = []
         self.save_data()

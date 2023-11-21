@@ -7,21 +7,33 @@ from wallet import Wallet
 
 
 class Node:
+    """The node which runs the local blockchain instance.
+
+    Attributes:
+        :id: The id of the node.
+        :blockchain: The blockchain which is run by this node.
+    """
+
     def __init__(self):
+        # self.id = str(uuid4())
         self.wallet = Wallet()
         self.wallet.create_keys()
         self.blockchain = Blockchain(self.wallet.public_key)
 
     def get_user_choice(self):
+        """Prompts the user for its choice and return it."""
         return input("Your Choice: ")
 
     def get_transaction_data(self):
-        """ Return the input of the user (a new transaction amount) as a float """
+        """Return the input of the user (a new transaction amount) as a float."""
+        # Get the user input, transform it from a string to a float and store it in user_input
         tx_receiver = input("Enter the receiver of the transaction: ")
         tx_return = float(input("Enter transaction amount please: "))
         return (tx_receiver, tx_return)
 
     def print_blokchain(self):
+        """Output all blocks of the blockchain."""
+        # Output the blockchain list to the console
         print("-" * 100)
         for block in self.blockchain.chain:
             print(block)
@@ -29,7 +41,10 @@ class Node:
             print("-" * 100)
 
     def listen_for_input(self):
+        """Starts the node and waits for user input."""
         waiting_for_input = True
+        # A while loop for the user input interface
+        # It's a loop that exits once waiting_for_input becomes False or when break is called
         while waiting_for_input:
             print("""Please Choose
                 1: Add a new transaction value
@@ -45,6 +60,7 @@ class Node:
             if choice == "1":
                 tx_data = self.get_transaction_data()
                 tx_receiver, tx_amount = tx_data
+                # Add the transaction amount to the blockchain
                 signature = self.wallet.sign_transaction(self.wallet.public_key, tx_receiver,
                                                          tx_amount)
                 if self.blockchain.add_transaction(tx_receiver, self.wallet.public_key, signature,
@@ -74,6 +90,7 @@ class Node:
                     tampered_block = Block(0, "tampered", [], 100, 1)
                     self.blockchain[0] = tampered_block
             elif choice == "q":
+                # This will lead to the loop to exist because it's running condition becomes False
                 waiting_for_input = False
             else:
                 print("Invalid choice, try again")
@@ -81,6 +98,7 @@ class Node:
             if not Verification.verify_chain(self.blockchain.chain, get_block_hash):
                 self.print_blokchain()
                 print("Blockchain coroupted!")
+                # Break out of the loop
                 break
 
             print("Balance of {}: {:6.2f}".format(

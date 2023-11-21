@@ -5,7 +5,7 @@ __all__ = ["get_hash_string_256", "get_block_hash"]  # allowed exports
 
 
 def get_hash_string_256(json_string):
-    """ Create a SHA256 hash for a given input string.
+    """Create a SHA256 hash for a given input string.
 
     Arguments:
         :string: The string which should be hashed.
@@ -14,7 +14,7 @@ def get_hash_string_256(json_string):
 
 
 def get_block_hash(block):
-    """ Hashes a block and returns a string representation  of it.
+    """Hashes a block and returns a string representation of it.
 
     Arguments:
         :block: The block that should be hashed.

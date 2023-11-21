@@ -14,9 +14,9 @@ class Wallet:
 
     def create_keys(self):
         """Create a new pair of private and public keys."""
-        private_key, public_key = self.generate_keys()
-        self.private_key = private_key
+        public_key, private_key = self.generate_keys()
         self.public_key = public_key
+        self.private_key = private_key
         self.save_keys()
 
     def save_keys(self):
@@ -36,7 +36,7 @@ class Wallet:
             with open("wallet.txt", mode="r") as f:
                 keys = f.readlines()
                 self.public_key = keys[0][:-1]
-                self.public_key = keys[1]
+                self.privat_key = keys[1]
         except (IOError, IndexError):
             print("Loading wallet failed...")
 
@@ -44,7 +44,7 @@ class Wallet:
         """Generate a new pair of private and public key."""
         private_key = RSA.generate(1024, Crypto.Random.new().read)
         public_key = private_key.publickey()
-        return ((binascii.hexlify(private_key.export_key(format="DER"))).decode("ascii"), (binascii.hexlify(public_key.export_key(format="DER"))).decode("ascii"))
+        return ((binascii.hexlify(public_key.export_key(format="DER"))).decode("ascii"), (binascii.hexlify(private_key.export_key(format="DER"))).decode("ascii"))
 
     def sign_transaction(self, sender, recipient, amount):
         """Sign a transaction and return the signature.

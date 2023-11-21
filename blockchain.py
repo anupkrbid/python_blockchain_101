@@ -58,7 +58,7 @@ class Blockchain:
             with open("blockchain.txt", mode="r") as f:
                 file_content = f.readlines()
                 blockchain = json.loads(file_content[0][:-1])
-                open_transactions = json.loads(file_content[1])
+                # We need to convert  the loaded data because Transactions should use OrderedDict
                 updated_blockchain = []
                 for block in blockchain:
                     converted_tx = [Transaction(
@@ -66,11 +66,18 @@ class Blockchain:
                     updated_block = Block(
                         block["index"], block["previous_hash"], converted_tx, block["proof"], block['timestamp'])
                     updated_blockchain.append(updated_block)
-
                 self.__chain = updated_blockchain
 
-                self.__open_transactions = [Transaction(
-                    tx["sender"], tx["receiver"], tx["signature"], tx["amount"]) for tx in open_transactions]
+                open_transactions = json.loads(file_content[1])
+                # We need to convert  the loaded data because Transactions should use OrderedDict
+                updated_open_transactions = []
+                for tx in open_transactions:
+                    updated_open_transaction = Transaction(
+                        tx['sender'], tx['receiver'], tx['signature'], tx['amount'])
+                    updated_open_transactions.append(updated_open_transaction)
+                self.__open_transactions = updated_open_transactions
+                # self.__open_transactions = [Transaction(
+                #     tx["sender"], tx["receiver"], tx["signature"], tx["amount"]) for tx in open_transactions]
         except (IOError, IndexError, EOFError):
             print("IOError or IndexError Exception Handle")
             pass

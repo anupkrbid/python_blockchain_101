@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from wallet import Wallet
@@ -70,7 +70,55 @@ def get_wallet_balance():
         }
         return jsonify(error_res), 400
 
-    return "This works"
+
+@app.route("/transactions", methods=["POST"])
+def add_transaction():
+    values = request.get_json()
+    if not values:
+        error_res = {
+            "message": "No request data found"
+        }
+        return jsonify(error_res), 400
+
+    required_fields = ["tx_receiver", "tx_amount"]
+    if not all((field in values) for field in required_fields):
+        error_res = {
+            "message": "tx_receiver & tx_amount are requierd fields"
+        }
+        return jsonify(error_res), 400
+
+    # Add the transaction amount to the blockchain
+    tx_receiver = values["tx_receiver"]
+    tx_amount = values["tx_amount"]
+    signature = wallet.sign_transaction(wallet.public_key, tx_receiver,
+                                        tx_amount)
+    if blockchain.add_transaction(tx_receiver, wallet.public_key, signature,
+                                  amount=tx_amount):
+        success_res = {
+            "message": "Transaction successful",
+            "funds": blockchain.get_balance(),
+            "transaction": {
+                "sender": wallet.public_key,
+                "receiver": tx_receiver,
+                "amount": tx_amount
+            }
+        }
+        return jsonify(success_res), 201
+    else:
+        error_res = {
+            "message": "Transaction failed"
+        }
+        return jsonify(error_res), 400
+
+
+@app.route("/transactions", methods=["GET"])
+def get_open_transactions():
+    dict_txs = [tx.__dict__ for tx in blockchain.open_transactions]
+    success_res = {
+        "message": "Open transactions fetch sucessful",
+        "open_transaction": dict_txs
+    }
+    return jsonify(success_res), 200
 
 
 @app.route("/blocks/mine", methods=["POST"])

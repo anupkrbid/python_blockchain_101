@@ -17,7 +17,6 @@ class Wallet:
         public_key, private_key = self.generate_keys()
         self.public_key = public_key
         self.private_key = private_key
-        self.save_keys()
 
     def save_keys(self):
         """Saves the keys to a file (wallet.txt)."""
@@ -46,17 +45,17 @@ class Wallet:
         public_key = private_key.publickey()
         return ((binascii.hexlify(public_key.export_key(format="DER"))).decode("ascii"), (binascii.hexlify(private_key.export_key(format="DER"))).decode("ascii"))
 
-    def sign_transaction(self, sender, recipient, amount):
+    def sign_transaction(self, sender, receiver, amount):
         """Sign a transaction and return the signature.
 
         Arguments:
             :sender: The sender of the transaction.
-            :recipient: The recipient of the transaction.
+            :receiver: The receiver of the transaction.
             :amount: The amount of the transaction.
         """
         signer = PKCS1_v1_5.new(RSA.import_key(
             binascii.unhexlify(self.private_key)))
-        hashh = SHA256.new(f"{sender}{recipient}{amount}".encode("utf8"))
+        hashh = SHA256.new(f"{sender}{receiver}{amount}".encode("utf8"))
         signature = signer.sign(hashh)
         return binascii.hexlify(signature).decode("ascii")
 

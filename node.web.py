@@ -150,7 +150,11 @@ def get_blockchain():
         dict_block["transactions"] = [
             tx.__dict__ for tx in dict_block["transactions"]]
 
-    return jsonify(dict_chain), 200
+    success_res = {
+        "message": "Blockchain fetch sucessful",
+        "blockchain": dict_chain
+    }
+    return jsonify(success_res), 200
 
 
 if __name__ == "__main__":

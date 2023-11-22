@@ -104,12 +104,12 @@
           <div class="col">
             <form @submit.prevent="onSendTx">
               <div class="form-group">
-                <label for="recipient">Recipient Key</label>
+                <label for="receiver">Receiver Key</label>
                 <input
-                  v-model="outgoingTx.recipient"
+                  v-model="outgoingTx.receiver"
                   type="text"
                   class="form-control"
-                  id="recipient"
+                  id="receiver"
                   placeholder="Enter key"
                 />
               </div>
@@ -133,7 +133,7 @@
                 <div></div>
               </div>
               <button
-                :disabled="txLoading || outgoingTx.recipient.trim() === '' || outgoingTx.amount <= 0"
+                :disabled="txLoading || outgoingTx.receiver.trim() === '' || outgoingTx.amount <= 0"
                 type="submit"
                 class="btn btn-primary"
               >
@@ -215,7 +215,7 @@
                         class="list-group-item flex-column align-items-start"
                       >
                         <div>Sender: {{ tx.sender }}</div>
-                        <div>Recipient: {{ tx.recipient }}</div>
+                        <div>Receiver: {{ tx.receiver }}</div>
                         <div>Amount: {{ tx.amount }}</div>
                       </div>
                     </div>
@@ -244,7 +244,7 @@
                         class="list-group-item flex-column align-items-start"
                       >
                         <div>Sender: {{ data.sender }}</div>
-                        <div>Recipient: {{ data.recipient }}</div>
+                        <div>Receiver: {{ data.receiver }}</div>
                         <div>Amount: {{ data.amount }}</div>
                       </div>
                     </div>
@@ -263,52 +263,8 @@
       new Vue({
         el: '#app',
         data: {
-          blockchain: [
-            {
-              previous_hash: 'fawsqwar2',
-              index: 0,
-              transactions: [
-                {
-                  sender: 'fsdf23',
-                  recipient: 'fadwfs314',
-                  amount: 5.5,
-                },
-                {
-                  sender: 'fssfsddf23',
-                  recipient: 'fadewasfwfs314',
-                  amount: 15.5,
-                },
-              ],
-            },
-            {
-              previous_hash: 'awdsf14',
-              index: 1,
-              transactions: [
-                {
-                  sender: 'afe',
-                  recipient: 'fadwe322fs314',
-                  amount: 1.5,
-                },
-                {
-                  sender: 'fssddf23',
-                  recipient: 'fadesfwfs314',
-                  amount: 4.5,
-                },
-              ],
-            },
-          ],
-          openTransactions: [
-            {
-              sender: '23r32r3fsas',
-              recipient: 'feadsf25',
-              amount: 5.9,
-            },
-            {
-              sender: '23r23r2ra3fsas',
-              recipient: 'sdfsfa',
-              amount: 1.5,
-            },
-          ],
+          blockchain: [],
+          openTransactions: [],
           wallet: null,
           view: 'chain',
           walletLoading: false,
@@ -319,7 +275,7 @@
           success: null,
           funds: 0,
           outgoingTx: {
-            recipient: '',
+            receiver: '',
             amount: 0,
           },
         },
@@ -335,72 +291,120 @@
         methods: {
           onCreateWallet: function () {
             // Send Http request to create a new wallet (and return keys)
-            if (Math.random() > 0.5) {
-              this.error = null;
-              this.success = 'Successfully stored transaction!';
-              this.wallet = {
-                private_key: 'fsde2523tfasg234twfg24qafew',
-                public_key: '532fsdarf23rf',
-              };
-            } else {
-              this.success = null;
-              this.error = 'Something went wrong!';
-              this.wallet = null;
-            }
+            this.walletLoading = true;
+            this.success = null;
+            this.error = null;
+            axios
+              .post('/wallets/create/keys')
+              .then((res) => {
+                this.error = null;
+                this.success = `${res.data.message}: Public Key: ${res.data.public_key}: Private Key: ${res.data.private_key}`;
+                this.wallet = {
+                  publicKey: res.data.public_key,
+                  privateKey: res.data.private_key,
+                };
+                this.funds = res.data.funds;
+                this.walletLoading = false;
+              })
+              .catch((err) => {
+                this.success = null;
+                this.wallet = null;
+                this.error = err.response.data.message;
+                this.walletLoading = false;
+              });
           },
           onLoadWallet: function () {
             // Send Http request to load an existing wallet (from a file on the server)
-            if (Math.random() > 0.5) {
-              this.error = null;
-              this.success = 'Successfully stored transaction!';
-              this.wallet = {
-                private_key: 'fsde2523tfasg234twfg24qafew',
-                public_key: '532fsdarf23rf',
-              };
-            } else {
-              this.success = null;
-              this.error = 'Something went wrong!';
-              this.wallet = null;
-            }
+            this.walletLoading = true;
+            this.success = null;
+            this.error = null;
+            axios
+              .post('/wallets/load/keys')
+              .then((res) => {
+                this.error = null;
+                this.success = `${res.data.message}: Public Key: ${res.data.public_key}: Private Key: ${res.data.private_key}`;
+                this.wallet = {
+                  publicKey: res.data.public_key,
+                  privateKey: res.data.private_key,
+                };
+                this.funds = res.data.funds;
+                this.walletLoading = false;
+              })
+              .catch((err) => {
+                this.success = null;
+                this.wallet = null;
+                this.error = err.response.data.message;
+                this.walletLoading = false;
+              });
           },
           onSendTx: function () {
             // Send Transaction to backend
-            if (Math.random() > 0.5) {
-              this.error = null;
-              this.success = 'Successfully stored transaction!';
-              this.funds = this.funds - this.outgoingTx.amount;
-            } else {
-              this.success = null;
-              this.error = 'Something went wrong!';
-            }
+            this.success = null;
+            this.error = null;
+            this.txLoading = true;
+            axios
+              .post('/transactions', {
+                tx_receiver: this.outgoingTx.receiver,
+                tx_amount: this.outgoingTx.amount,
+              })
+              .then((res) => {
+                this.error = null;
+                this.success = res.data.message;
+                this.txLoading = false;
+                this.funds = res.data.funds;
+                this.outgoingTx.receiver = '';
+                this.outgoingTx.amount = 0;
+              })
+              .catch((err) => {
+                this.success = null;
+                this.error = err.response.data.message;
+                this.txLoading = false;
+              });
           },
           onMine: function () {
-            if (Math.random() > 0.5) {
-              this.error = null;
-              this.success = 'Successfully mined coins!';
-              this.funds = this.funds + 10;
-            } else {
-              this.success = null;
-              this.error = 'Something went wrong!';
-            }
+            this.success = null;
+            this.error = null;
+            axios
+              .post('/blocks/mine')
+              .then((res) => {
+                this.error = null;
+                this.success = res.data.message;
+                this.funds = res.data.funds;
+              })
+              .catch((err) => {
+                this.success = null;
+                this.wallet = null;
+                this.error = err.response.data.message;
+              });
           },
           onLoadData: function () {
+            this.dataLoading = true;
+            this.success = null;
+            this.error = null;
             if (this.view === 'chain') {
               // Load blockchain data
-              if (Math.random() > 0.5) {
-                this.error = null;
-              } else {
-                this.success = null;
-                this.error = 'Something went wrong!';
-              }
+              axios
+                .get('/blockchain')
+                .then((res) => {
+                  this.blockchain = res.data.blockchain;
+                  this.dataLoading = false;
+                })
+                .catch((err) => {
+                  this.error = err.response.data.message;
+                  this.dataLoading = false;
+                });
             } else {
               // Load transaction data
-              if (Math.random() > 0.5) {
-                this.error = null;
-              } else {
-                this.success = null;
-                this.error = 'Something went wrong!';
-              }
+              axios
+                .get('/transactions')
+                .then((res) => {
+                  this.openTransactions = res.data.open_transaction;
+                  this.dataLoading = false;
+                })
+                .catch((err) => {
+                  this.error = err.response.data.message;
+                  this.dataLoading = false;
+                });
             }
           },
         },

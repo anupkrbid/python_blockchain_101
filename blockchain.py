@@ -21,14 +21,15 @@ class Blockchain:
         :hosting_node: The connected node (which runs the blockchain).
     """
 
-    def __init__(self, hosting_node_id) -> None:
-        self.hosting_node_id = hosting_node_id
+    def __init__(self, wallet_public_key, current_node_id) -> None:
+        self.wallet_public_key = wallet_public_key
         # Our starting block for the blockchain
         genesis_block = Block(0, "", [], 100, 0)
         # Initializing our blockchain list
         self.__chain = [genesis_block]
         self.__open_transactions = []
         self.__peer_nodes = set()
+        self.__current_node_id = current_node_id
         self.load_data()
 
     @property
@@ -56,7 +57,7 @@ class Blockchain:
             #         file_content).values()
             #     self.__chain = blockchain
             #     self.__open_transactions = open_transactions
-            with open("blockchain.txt", mode="r") as f:
+            with open("data/blockchain-{}.txt".format(self.__current_node_id), mode="r") as f:
                 file_content = f.readlines()
                 blockchain = json.loads(file_content[0][:-1])
                 # We need to convert  the loaded data because Transactions should use OrderedDict
@@ -97,7 +98,7 @@ class Blockchain:
             #         "open_transactions": self.__open_transactions
             #     }
             #     f.write(pickle.dumps(save_data))
-            with open("blockchain.txt", mode="w") as f:
+            with open("data/blockchain-{}.txt".format(self.__current_node_id), mode="w") as f:
                 modified_blockchain = [
                     Block(block_el.index, block_el.previous_hash, [tx.__dict__ for tx in block_el.transactions], block_el.proof,  block_el.timestamp) for block_el in self.chain]
                 saveable_chain = [
@@ -125,9 +126,9 @@ class Blockchain:
 
     def get_balance(self):
         """Calculate and return the balance for a participant."""
-        if self.hosting_node_id == None:
+        if self.wallet_public_key == None:
             return None
-        recipient = self.hosting_node_id
+        recipient = self.wallet_public_key
         # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
         # This fetches sent amounts of transactions that were already included in blocks of the blockchain
         tx_debit_balances = [[tx.amount for tx in block.transactions if tx.sender == recipient]
@@ -163,7 +164,7 @@ class Blockchain:
             :signature: The signature of the transaction 
             :amount: The amount of coins sent
         """
-        if self.hosting_node_id == None:
+        if self.wallet_public_key == None:
             return False
 
         transaction = Transaction(sender, receiver, signature, amount)
@@ -177,7 +178,7 @@ class Blockchain:
     def mine_block(self):
         """Create a new block and add open transactions to it."""
         # Fetch the currently last block of the blockchain
-        if self.hosting_node_id == None:
+        if self.wallet_public_key == None:
             print("Mining Failed. Got no wallet?")
             return None
 
@@ -186,7 +187,7 @@ class Blockchain:
         hashed_block = get_block_hash(last_block)
         proof = self.proof_of_work()
         tx_reward = Transaction(
-            "MINING", self.hosting_node_id, "", MINING_REWARD)
+            "MINING", self.wallet_public_key, "", MINING_REWARD)
         # Copy transaction instead of manipulating the original open_transactions list
         # This ensures that if for some reason the mining should fail, we don't have the reward transaction stored in the open transactions
         copied_transaction = self.__open_transactions[:]

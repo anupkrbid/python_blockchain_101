@@ -1,12 +1,11 @@
 from flask import Flask, jsonify, request, send_from_directory
+from argparse import ArgumentParser
 from flask_cors import CORS
 
 from wallet import Wallet
 from blockchain import Blockchain
 
 app = Flask(__name__)
-wallet = Wallet()
-blockchain = Blockchain(wallet.public_key)
 CORS(app)
 
 
@@ -25,7 +24,7 @@ def create_wallet_keys():
     global blockchain
     wallet.create_keys()
     if wallet.save_keys():
-        blockchain = Blockchain(wallet.public_key)
+        blockchain = Blockchain(wallet.public_key, port)
         success_res = {
             "message": "Wallet keys creation successful.",
             "funds": blockchain.get_balance(),
@@ -44,7 +43,7 @@ def create_wallet_keys():
 def load_wallet_keys():
     global blockchain
     if wallet.load_keys() != None:
-        blockchain = Blockchain(wallet.public_key)
+        blockchain = Blockchain(wallet.public_key, port)
         success_res = {
             "message": "Wallet keys loading successful",
             "funds": blockchain.get_balance(),
@@ -213,4 +212,10 @@ def remove_node(node_url):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    parser = ArgumentParser()
+    parser.add_argument("-p", "--port", type=int, default=8000)
+    args = parser.parse_args()
+    port = args.port
+    wallet = Wallet(port)
+    blockchain = Blockchain(wallet.public_key, port)
+    app.run(host="0.0.0.0", port=port)

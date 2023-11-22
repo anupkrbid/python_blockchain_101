@@ -78,3 +78,7 @@ More on Python Modules: https://docs.python.org/3/tutorial/modules.html
 Using Anaconda: https://docs.anaconda.com/anaconda/
 
 PyCrypto Docs: https://pypi.org/project/pycrypto/
+
+Standard Library Http Modules: https://docs.python.org/3/library/internet.html
+
+Dive Deeper into Flask: http://flask.pocoo.org/

@@ -157,5 +157,55 @@ def get_blockchain():
     return jsonify(success_res), 200
 
 
+@app.route("/nodes", methods=["POST"])
+def add_node():
+    values = request.get_json()
+    if not values:
+        error_res = {
+            "message": "No data found"
+        }
+        return jsonify(error_res), 400
+
+    if "node" not in values:
+        error_res = {
+            "message": "No node data found"
+        }
+        return jsonify(error_res), 400
+
+    blockchain.add_peer_node(values.get("node"))
+    success_res = {
+        "message": "Node addition sucessful",
+        "nodes": list(blockchain.get_peer_nodes())
+    }
+    return jsonify(success_res), 200
+
+
+@app.route("/nodes", methods=["GET"])
+def get_nodes():
+    blockchain.get_peer_nodes()
+    success_res = {
+        "message": "Nodes fetch sucessful",
+        "nodes": list(blockchain.get_peer_nodes())
+    }
+    return jsonify(success_res), 200
+
+
+@app.route("/nodes/<node_url>", methods=["DELETE"])
+def remove_node(node_url):
+
+    if node_url == "" or node_url == None:
+        error_res = {
+            "message": "No node data found"
+        }
+        return jsonify(error_res), 400
+
+    blockchain.remove_peer_node(node_url)
+    success_res = {
+        "message": "Node removal sucessful",
+        "nodes": list(blockchain.get_peer_nodes())
+    }
+    return jsonify(success_res), 200
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

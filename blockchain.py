@@ -1,5 +1,6 @@
 import functools
 import json
+import requests
 import pickle
 
 from block import Block
@@ -124,11 +125,14 @@ class Blockchain:
             proof += 1
         return proof
 
-    def get_balance(self):
+    def get_balance(self, sender=None):
         """Calculate and return the balance for a participant."""
-        if self.wallet_public_key == None:
-            return None
-        recipient = self.wallet_public_key
+        if sender == None:
+            if self.wallet_public_key == None:
+                return None
+            recipient = self.wallet_public_key
+        else:
+            recipient = sender
         # Fetch a list of all sent coin amounts for the given person (empty lists are returned if the person was NOT the sender)
         # This fetches sent amounts of transactions that were already included in blocks of the blockchain
         tx_debit_balances = [[tx.amount for tx in block.transactions if tx.sender == recipient]
@@ -155,7 +159,7 @@ class Blockchain:
 
         return self.chain[-1]
 
-    def add_transaction(self, receiver, sender, signature, amount=1.0):
+    def add_transaction(self, receiver, sender, signature, amount=1.0, is_receiving=False):
         """Append a new value as well as the last blockchain value to the current blockchain.
 
         Attribute:
@@ -172,8 +176,38 @@ class Blockchain:
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
             self.save_data()
+            if not is_receiving:
+                for node in self.__peer_nodes:
+                    url = "http://{}/transactions/boadcast".format(node)
+                    dict_payload = {
+                        "sender": sender,
+                        "receiver": receiver,
+                        "signature": signature,
+                        "amount": amount
+                    }
+                    try:
+                        res = requests.post(url, json=dict_payload)
+                        if res.status_code == 400 or res.status_code == 500:
+                            print("Transaction declined, need resolving")
+                            return False
+                    except requests.exceptions.ConnectionError:
+                        continue
             return True
         return False
+
+    def add_block(self, block):
+        txs = [Transaction(tx["sender"], tx["recipient"],
+                           tx["signature"], tx["amount"]) for tx in block["transaction"]]
+        proof_is_valid = Verification.valid_proof(
+            txs, block["previous_hash"], block['proof'])
+        hashs_match = get_block_hash(self.chain[-1]) == block["prefious_hash"]
+        if not proof_is_valid or not hashs_match:
+            return False
+        converted_block = Block(
+            block['index'], block['previous_hash', txs, block["proof"], block["timestamp"]])
+        self.__chain.append(converted_block)
+        self.save_data()
+        return True
 
     def mine_block(self):
         """Create a new block and add open transactions to it."""

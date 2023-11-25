@@ -125,6 +125,70 @@ def get_open_transactions():
     return jsonify(success_res), 200
 
 
+@app.route("/transactions/broadcast", methods=["POST"])
+def listen_to_broadcasted_transactions():
+    values = request.get_json()
+    if not values:
+        error_res = {
+            "message": "No data found",
+        }
+        return jsonify(error_res), 400
+
+    required = ["sender", "receiver", "amount", "signature"]
+    if not all([key in values for key in required]):
+        error_res = {
+            "message": "Some requierd field missing",
+        }
+        return jsonify(error_res), 400
+
+    is_sucess_res = blockchain.add_transaction(
+        values["sender"], values["receiver"], values["signature"], values["amount"], is_receiving=True)
+    if is_sucess_res:
+        success_res = {
+            "message": "Transaction brodcast successful",
+            "transaction": {
+                "sender": values["sender"],
+                "receiver": values["receiver"],
+                "amount": values["amount"],
+                "signature": values["signature"]
+            }
+        }
+        return jsonify(success_res), 201
+    else:
+        error_res = {
+            "message": "Transaction failed"
+        }
+        return jsonify(error_res), 400
+
+
+@app.route("/blocks/broadcast", methods=["POST"])
+def broadcast_block():
+    values = request.get_json()
+    if not values:
+        error_res = {
+            "message": "No data found",
+        }
+        return jsonify(error_res), 400
+
+    required = ["sender", "receiver", "amount", "signature"]
+    if "block" not in values:
+        error_res = {
+            "message": "Block field missing",
+        }
+        return jsonify(error_res), 400
+
+    block = values["block"]
+    if block["index"] == blockchain.chain[-1].index + 1:
+        blockchain.add_block(block)
+    elif block["index"] > blockchain.chain[-1].index:
+        pass
+    else:
+        response = {
+            "message": "Blockchain seems to be shorted, bloxk not added"
+        }
+        return jsonify(response), 409
+
+
 @app.route("/blocks/mine", methods=["POST"])
 def mine_block():
     mined_block = blockchain.mine_block()

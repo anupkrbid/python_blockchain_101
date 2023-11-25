@@ -82,3 +82,5 @@ PyCrypto Docs: https://pypi.org/project/pycrypto/
 Standard Library Http Modules: https://docs.python.org/3/library/internet.html
 
 Dive Deeper into Flask: http://flask.pocoo.org/
+
+The requests Library: http://docs.python-requests.org/en/master/
